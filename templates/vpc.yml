@@ -68,6 +68,35 @@ Resources:
       SubnetId: !Ref MinticPublicSubnet2
       RouteTableId: !Ref MinticRouteTable
 
+  MinticSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group para instancias EC2 con HTTP y SSH
+      VpcId: !Ref MinticVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Permitir HTTP desde internet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Permitir HTTPS desde internet
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: Permitir SSH desde internet
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Permitir todo el tráfico de salida
+      Tags:
+        - Key: Name
+          Value: MinticSecurityGroup
+
 Outputs:
   VPCId:
     Value: !Ref MinticVPC
@@ -83,3 +112,8 @@ Outputs:
     Value: !Ref MinticPublicSubnet2
     Export:
       Name: Mintic-SubnetPublic2
+
+  SecurityGroupId:
+    Value: !Ref MinticSecurityGroup
+    Export:
+      Name: Mintic-SecurityGroupId
