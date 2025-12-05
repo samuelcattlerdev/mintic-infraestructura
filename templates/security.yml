@@ -13,21 +13,21 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-          Description: Permitir HTTP desde internet
+          Description: Permitir HTTP desde Internet
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-          Description: Permitir HTTPS desde internet
+          Description: Permitir HTTPS desde Internet
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
-          Description: Permitir SSH desde internet
+          Description: Permitir SSH desde Internet
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
-          Description: Permitir todo el tráfico de salida
+          Description: Permitir todo el trafico de salida
       Tags:
         - Key: Name
           Value: MinticSecurityGroup
