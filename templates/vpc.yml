@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Crea la VPC, subredes públicas, IGW y tabla de rutas para Mintic
+
+Resources:
+  MinticVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MinticVPC
+
+  MinticInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  MinticAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MinticVPC
+      InternetGatewayId: !Ref MinticInternetGateway
+
+  MinticPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MinticVPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: MinticPublicSubnet1
+
+  MinticPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MinticVPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: MinticPublicSubnet2
+
+  MinticRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MinticVPC
+
+  MinticPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: MinticAttachGateway
+    Properties:
+      RouteTableId: !Ref MinticRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MinticInternetGateway
+
+  MinticSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MinticPublicSubnet1
+      RouteTableId: !Ref MinticRouteTable
+
+  MinticSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MinticPublicSubnet2
+      RouteTableId: !Ref MinticRouteTable
+
+Outputs:
+  VPCId:
+    Value: !Ref MinticVPC
+    Export:
+      Name: Mintic-VPCId
+
+  SubnetPublic1:
+    Value: !Ref MinticPublicSubnet1
+    Export:
+      Name: Mintic-SubnetPublic1
+
+  SubnetPublic2:
+    Value: !Ref MinticPublicSubnet2
+    Export:
+      Name: Mintic-SubnetPublic2

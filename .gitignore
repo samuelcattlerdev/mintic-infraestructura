@@ -1,0 +1,14 @@
+# Archivos sensibles
+*.pem
+*.key
+.env
+credentials.txt
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp

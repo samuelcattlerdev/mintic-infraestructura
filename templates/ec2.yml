@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Instancias EC2 estáticas en dos AZ con UserData
+
+Parameters:
+  MinticAmiId:
+    Description: AMI para las instancias EC2
+    Type: String
+    Default: ami-0453ec754f44f9a4a  # Amazon Linux 2023 x86_64 us-east-1
+
+Resources:
+  MinticEC2AZ1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref MinticAmiId
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          SubnetId:
+            Fn::ImportValue: Mintic-SubnetPublic1
+          DeviceIndex: 0
+          GroupSet:
+            - Fn::ImportValue: Mintic-SecurityGroupId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<html><body><h1>Hola desde EC2 AZ1 - IP: $(hostname -f)</h1></body></html>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: MinticEC2-AZ1
+
+  MinticEC2AZ2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref MinticAmiId
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          SubnetId:
+            Fn::ImportValue: Mintic-SubnetPublic2
+          DeviceIndex: 0
+          GroupSet:
+            - Fn::ImportValue: Mintic-SecurityGroupId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<html><body><h1>Hola desde EC2 AZ2 - IP: $(hostname -f)</h1></body></html>" > /var/www/html/index.html
+      Tags:
+        - Key: Name
+          Value: MinticEC2-AZ2
+
+Outputs:
+  MinticEC2AZ1PublicIP:
+    Description: IP pública de la instancia EC2 en AZ1
+    Value: !GetAtt MinticEC2AZ1.PublicIp
+
+  MinticEC2AZ2PublicIP:
+    Description: IP pública de la instancia EC2 en AZ2
+    Value: !GetAtt MinticEC2AZ2.PublicIp

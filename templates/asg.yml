@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Auto Scaling Group con Launch Template y warm pool
+
+Resources:
+  MinticLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        ImageId: ami-0453ec754f44f9a4a  # Amazon Linux 2023 x86_64 us-east-1
+        InstanceType: t2.micro
+        SecurityGroupIds:
+          - !ImportValue Mintic-SecurityGroupId
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+            yum install -y httpd
+            systemctl start httpd
+            systemctl enable httpd
+            echo "<html><body><h1>¡Hola desde CloudFormation ASG - IP: $(hostname -f)!</h1></body></html>" > /var/www/html/index.html
+
+  MinticASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !ImportValue Mintic-SubnetPublic1
+        - !ImportValue Mintic-SubnetPublic2
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MinticLaunchTemplate
+        Version: !GetAtt MinticLaunchTemplate.LatestVersionNumber
+      MinSize: '2'
+      MaxSize: '2'
+      DesiredCapacity: '2'
+      TargetGroupARNs:
+        - !ImportValue MinticTargetGroupArn
+      Tags:
+        - Key: Name
+          Value: MinticASG-Instance
+          PropagateAtLaunch: true
+
+  MinticASGStopSchedule:
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: !Ref MinticASG
+      MinSize: 0
+      MaxSize: 0
+      DesiredCapacity: 0
+      Recurrence: "0 13 * * *"
+
+  MinticASGStartSchedule:
+    Type: AWS::AutoScaling::ScheduledAction
+    Properties:
+      AutoScalingGroupName: !Ref MinticASG
+      MinSize: 2
+      MaxSize: 2
+      DesiredCapacity: 2
+      Recurrence: "15 13 * * *"
+
+  MinticWarmPool:
+    Type: AWS::AutoScaling::WarmPool
+    Properties:
+      AutoScalingGroupName: !Ref MinticASG
+      PoolState: Stopped
+      MinSize: 1
+
+Outputs:
+  MinticASGId:
+    Description: ID del Auto Scaling Group
+    Value: !Ref MinticASG
+    Export:
+      Name: MinticASGId
